@@ -671,6 +671,7 @@ function saveVision(){
     '✓ Tu visión quedó guardada en este dispositivo.';
 
   updateWhy();
+  updateHomeState();
 }
 
 function loadVision(){
@@ -738,10 +739,94 @@ function updateDailyProgress(){
   document.getElementById('dailyProgress').style.width =
     percentage + '%';
 }
+function updateHomeState(){
 
+  const inicio = document.getElementById('inicio');
+
+  const previousWelcome = document.getElementById('newUserWelcome');
+  if(previousWelcome){
+    previousWelcome.remove();
+  }
+
+  let data = {};
+
+  const stored = localStorage.getItem('igtVision');
+
+  if(stored){
+    try{
+      data = JSON.parse(stored);
+    }catch(e){}
+  }
+
+  const pasos = [
+    data.why,
+    data.goal90,
+    data.vision5,
+    data.powerHour
+  ];
+
+  const completados = pasos.filter(valor =>
+    valor && String(valor).trim() !== ''
+  ).length;
+
+  const rutaLista = completados === 4;
+
+  Array.from(inicio.children).forEach(elemento => {
+    elemento.style.display = rutaLista ? '' : 'none';
+  });
+
+  if(!rutaLista){
+
+    const porcentaje = (completados / 4) * 100;
+
+    const welcome = document.createElement('div');
+    welcome.id = 'newUserWelcome';
+    welcome.style.display = 'block';
+
+    welcome.innerHTML = `
+      <div class="hero">
+        <div class="eyebrow">Bienvenida a IGT</div>
+
+        <h1>Este es el comienzo de tu camino.</h1>
+
+        <p>
+          Antes de pensar en qué hacer, vamos a entender
+          qué querés construir y por qué.
+        </p>
+
+        <button class="btn" onclick="goTo('ruta')">
+          ${completados > 0 ? 'Continuar mi ruta' : 'Empezar mi ruta'}
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Tu recorrido</div>
+        <h2>${completados} de 4 pasos definidos</h2>
+
+        <div class="progress">
+          <span style="width:${porcentaje}%"></span>
+        </div>
+
+        <p class="small">
+          Visión → Objetivo → Power Hour → Plan de acción
+        </p>
+      </div>
+
+      <div class="quote">
+        <p>
+          No necesitás tener todo resuelto para empezar.
+          Necesitás una dirección.
+        </p>
+      </div>
+    `;
+
+    inicio.prepend(welcome);
+  }
+}
+  
 loadVision();
 updateDailyProgress();
-
+updateHomeState();
 </script>
 
 </body>
