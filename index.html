@@ -355,8 +355,8 @@
     <nav>
       <button class="active" onclick="showPage('inicio',this)">Inicio</button>
       <button onclick="showPage('ruta',this)">Mi Ruta</button>
-      <button onclick="showPage('academia',this)">Academia</button>
-      <button onclick="showPage('equipo',this)">Mi Equipo</button>
+      <button onclick="showPage('academia',this)">Academia</ 
+        <button id="teamNavButton" onclick="showPage('equipo',this)" style="display:none;">Mi Equipo</button>
       <button onclick="showPage('perfil',this)">Perfil</button>
     </nav>
   </div>
@@ -823,10 +823,21 @@ function updateHomeState(){
     inicio.prepend(welcome);
   }
 }
-  
+ function updateRoleUI(){
+
+  const role = localStorage.getItem('igtRole') || 'persona';
+  const teamButton = document.getElementById('teamNavButton');
+
+  if(role === 'lider'){
+    teamButton.style.display = '';
+  }else{
+    teamButton.style.display = 'none';
+  }
+} 
 loadVision();
 updateDailyProgress();
 updateHomeState();
+  updateRoleUI();
 </script>
 
 </body>
