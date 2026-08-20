@@ -339,6 +339,22 @@
       padding:25px;
     }
 
+    body.signed-out header,
+    body.signed-out main,
+    body.signed-out footer{ display:none; }
+    body:not(.signed-out) #authGate{ display:none; }
+    .auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--crema);}
+    .auth-card{width:min(100%,470px);background:var(--papel);border:1px solid var(--borde);border-radius:26px;padding:32px;}
+    .auth-card h1{font-size:42px;margin:10px 0;}
+    .auth-tabs{display:flex;gap:8px;margin:22px 0 8px;}
+    .auth-tabs button{flex:1;margin:0;}
+    .account-box{display:flex;align-items:center;gap:10px;font-size:13px;}
+    .account-box .btn{margin:0;padding:9px 12px;}
+    .form-message{min-height:22px;margin-top:12px;color:var(--marron);}
+    .team-list{margin-top:16px;}
+    .invite-code{font-family:monospace;font-size:18px;letter-spacing:1px;overflow-wrap:anywhere;}
+    .loading{opacity:.65;pointer-events:none;}
+
     @media(max-width:760px){
       header{ padding:12px 16px; }
       .brand{
@@ -373,11 +389,39 @@
       .training-head{ display:block; }
       .training .btn{ width:100%; margin-top:16px; }
       .person{ align-items:flex-start; flex-wrap:wrap; }
+      .account-box{grid-column:1 / -1;justify-content:space-between;}
+      .auth-card{padding:24px 20px;}
+      .auth-card h1{font-size:36px;}
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body>
+<body class="signed-out">
+<section id="authGate" class="auth-gate">
+  <div class="auth-card">
+    <div class="eyebrow">Inspiring Global Team</div>
+    <div class="logo serif">IGT</div>
+    <h1>Tu camino, siempre con vos.</h1>
+    <p class="small">Ingresá con tu correo. Te enviaremos un enlace seguro, sin contraseña.</p>
+    <div class="auth-tabs">
+      <button id="loginMode" class="btn" type="button">Ingresar</button>
+      <button id="signupMode" class="btn secondary" type="button">Crear cuenta</button>
+    </div>
+    <form id="authForm">
+      <div id="nameField" hidden>
+        <label for="authName">Nombre y apellido</label>
+        <input id="authName" autocomplete="name" placeholder="Tu nombre">
+      </div>
+      <label for="authEmail">Correo electrónico</label>
+      <input id="authEmail" type="email" autocomplete="email" required placeholder="vos@ejemplo.com">
+      <label for="authInvite">Código de invitación <span class="small">(opcional)</span></label>
+      <input id="authInvite" autocomplete="off" placeholder="IGT-XXXXXXXX">
+      <button id="authSubmit" class="btn" type="submit">Enviarme el enlace de ingreso</button>
+      <p id="authMessage" class="form-message small"></p>
+    </form>
+  </div>
+</section>
 
 <header>
   <div class="brand">
@@ -395,6 +439,7 @@
       <button id="teamNavButton" class="role-only" type="button" data-page="equipo" hidden>Mi Equipo</button>
       <button type="button" data-page="perfil">Perfil</button>
     </nav>
+    <div class="account-box"><span id="accountName">Cargando…</span><button id="logoutButton" class="btn secondary" type="button">Salir</button></div>
   </div>
 </header>
 
@@ -546,52 +591,44 @@
 
   <!-- MI EQUIPO -->
   <section id="equipo" class="page">
-
     <div class="eyebrow">Liderazgo</div>
     <h1 class="section-title">Mi Equipo</h1>
-    <p class="section-sub">
-      Personas primero. Datos después.
-    </p>
-
-    <div class="card empty-state">
-      <div class="profile-circle" style="margin:0 auto 14px;">IGT</div>
-      <h2>Tu equipo aparecerá acá</h2>
-      <p>Cuando sumes personas, vas a poder ver su avance y acompañarlas desde este espacio.</p>
+    <p class="section-sub">Personas primero. Datos después.</p>
+    <div class="card">
+      <h2>Personas para acompañar</h2>
+      <div id="teamList" class="team-list"><p class="small">Cargando equipo…</p></div>
     </div>
-
     <div class="card" style="margin-top:18px;">
       <h2>Invitar a una persona</h2>
-      <p>Tu link personal de IGT te permite conectar automáticamente cada nueva persona con tu organización.</p>
-      <button class="btn">Copiar mi link</button>
+      <p>Compartí tu enlace para asociar automáticamente cada nueva persona con tu organización.</p>
+      <div id="inviteCode" class="notice invite-code">Generando…</div>
+      <button id="copyInviteButton" class="btn" type="button">Copiar mi enlace</button>
     </div>
-
   </section>
 
 
   <!-- PERFIL -->
   <section id="perfil" class="page">
-
     <div class="eyebrow">Perfil</div>
     <h1 class="section-title">Tu evolución también es parte del camino.</h1>
-
     <div class="grid">
       <div class="card">
-        <h2>Mi visión</h2>
-        <p>Podés volver, leerla y modificarla cuando tu vida o tus objetivos cambien.</p>
-        <button class="btn secondary" onclick="goTo('ruta')">Editar mi visión</button>
+        <h2>Mi cuenta</h2>
+        <label for="profileName">Nombre y apellido</label>
+        <input id="profileName" autocomplete="name">
+        <p id="roleDisplay" class="status">Persona Nueva</p>
+        <button id="saveProfileButton" class="btn secondary" type="button">Guardar perfil</button>
       </div>
-
       <div class="card">
-        <h2>Ciclo actual</h2>
-        <p><strong>Ciclo 1 · Día 1 de 90</strong></p>
-        <p class="small">Cuando completes los 90 días, vas a poder revisar tu evolución y comenzar un nuevo ciclo.</p>
+        <h2>Unirme a un equipo</h2>
+        <p class="small">Si recibiste una invitación, ingresá el código acá.</p>
+        <label for="profileInvite">Código de invitación</label>
+        <input id="profileInvite" placeholder="IGT-XXXXXXXX">
+        <button id="claimInviteButton" class="btn secondary" type="button">Usar invitación</button>
+        <p id="profileMessage" class="small" style="margin-top:10px;"></p>
       </div>
     </div>
-
-    <div class="quote">
-      <p>No estás empezando de nuevo. Estás empezando desde todo lo que aprendiste.</p>
-    </div>
-
+    <div class="quote"><p>No estás empezando de nuevo. Estás empezando desde todo lo que aprendiste.</p></div>
   </section>
 
 </main>
@@ -602,78 +639,164 @@
 
 
 <script>
-const routeFields = ['why','goal90','vision5','powerHour','contactCommitment','productCommitment','projectCommitment','followupCommitment'];
-const trainings = [
-  ['Visión y propósito','Conectá con lo que querés construir y por qué es importante para vos.'],
-  ['Tecnologías esenciales','Conocé las herramientas que vas a utilizar para desarrollar tu actividad.'],
-  ['Plan de compensación','Entendé cómo funciona el negocio utilizando siempre la información oficial vigente.'],
-  ['Productos y experiencia','Usar → conocer → compartir → recomendar → acompañar.'],
-  ['Sistema y duplicación','Aprendé → aplicá → enseñá → duplicá.']
-];
+const SUPABASE_URL='https://cpeettjgiojmpfvpdieo.supabase.co';
+const SUPABASE_KEY='sb_publishable_03zCimNiMkU1S0WhBL9z5w_MVKMhoqR';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const routeFields=['why','goal90','vision5','powerHour','contactCommitment','productCommitment','projectCommitment','followupCommitment'];
+let authMode='login';
+let currentUser=null;
+let currentProfile=null;
+let currentRoute={};
+let trainingRows=[];
+let trainingViewed=new Set();
 
-function safeStored(key, fallback = null){
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch (_) { return fallback; }
+function setMessage(id,text,isError=false){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=text;
+  el.style.color=isError?'#9b2c2c':'var(--marron)';
 }
 
-function showPage(page, button){
-  if(page === 'equipo' && (localStorage.getItem('igtRole') || 'persona') !== 'lider') page = 'inicio';
-  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === page));
-  document.querySelectorAll('nav button[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+function setAuthMode(mode){
+  authMode=mode;
+  const signup=mode==='signup';
+  document.getElementById('nameField').hidden=!signup;
+  document.getElementById('loginMode').className='btn '+(signup?'secondary':'');
+  document.getElementById('signupMode').className='btn '+(signup?'':'secondary');
+  document.getElementById('authSubmit').textContent=signup?'Crear mi cuenta':'Enviarme el enlace de ingreso';
+  setMessage('authMessage','');
+}
+
+async function submitAuth(event){
+  event.preventDefault();
+  const email=document.getElementById('authEmail').value.trim();
+  const name=document.getElementById('authName').value.trim();
+  const invite=document.getElementById('authInvite').value.trim().toUpperCase();
+  if(authMode==='signup'&&!name){setMessage('authMessage','Ingresá tu nombre.',true);return;}
+  if(invite) localStorage.setItem('igtPendingInvite',invite);
+  document.getElementById('authForm').classList.add('loading');
+  const {error}=await db.auth.signInWithOtp({
+    email,
+    options:{
+      emailRedirectTo:'https://luugommezz2-dotcom.github.io/igt-web/',
+      shouldCreateUser:authMode==='signup',
+      data:{full_name:name}
+    }
+  });
+  document.getElementById('authForm').classList.remove('loading');
+  if(error){setMessage('authMessage',error.message,true);return;}
+  setMessage('authMessage','Revisá tu correo y abrí el enlace de acceso.');
+}
+
+async function handleSession(session){
+  currentUser=session?.user||null;
+  if(!currentUser){
+    document.body.classList.add('signed-out');
+    return;
+  }
+  await loadApp();
+}
+
+async function loadApp(){
+  document.body.classList.add('loading');
+  let {data:profile,error}=await db.from('profiles').select('id,full_name,role,sponsor_id').eq('id',currentUser.id).single();
+  if(error){document.body.classList.remove('loading');setMessage('authMessage','No pudimos cargar tu perfil.',true);return;}
+  currentProfile=profile;
+  const pending=localStorage.getItem('igtPendingInvite');
+  if(pending&&!profile.sponsor_id){
+    const {data:claimed}=await db.rpc('claim_invitation',{p_code:pending});
+    if(claimed){
+      localStorage.removeItem('igtPendingInvite');
+      const refreshed=await db.from('profiles').select('id,full_name,role,sponsor_id').eq('id',currentUser.id).single();
+      currentProfile=refreshed.data||profile;
+    }
+  }
+  document.body.classList.remove('signed-out');
+  document.body.classList.remove('loading');
+  document.getElementById('accountName').textContent=currentProfile.full_name||currentUser.email;
+  document.getElementById('profileName').value=currentProfile.full_name||'';
+  document.getElementById('roleDisplay').textContent=roleLabel(currentProfile.role);
+  updateRoleUI();
+  await Promise.all([loadRoute(),loadAcademy()]);
+  if(['lider','admin'].includes(currentProfile.role)) await loadTeam();
+}
+
+function roleLabel(role){
+  return role==='admin'?'Administración':role==='lider'?'Líder':'Persona Nueva';
+}
+
+function showPage(page,button){
+  if(page==='equipo'&&!['lider','admin'].includes(currentProfile?.role)) page='inicio';
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));
+  document.querySelectorAll('nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   if(button) button.classList.add('active');
   document.getElementById('mainNav').classList.remove('open');
   document.getElementById('menuToggle').setAttribute('aria-expanded','false');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function goTo(page){ showPage(page, document.querySelector('[data-page="'+page+'"]')); }
-function getVision(){ return safeStored('igtVision', {}) || {}; }
+function goTo(page){showPage(page,document.querySelector('[data-page="'+page+'"]'));}
 
-function saveVision(){
-  const data = {};
-  routeFields.forEach(id => data[id] = document.getElementById(id).value.trim());
-  data.businessType = document.getElementById('businessType').value;
-  localStorage.setItem('igtVision', JSON.stringify(data));
-  document.getElementById('savedMessage').textContent = '✓ Tu ruta quedó guardada en este dispositivo.';
+async function loadRoute(){
+  const {data}=await db.from('routes').select('*').eq('user_id',currentUser.id).maybeSingle();
+  currentRoute=data||{};
+  const map={why:'why',goal90:'goal_90',vision5:'vision_5',businessType:'business_type',powerHour:'power_hour',contactCommitment:'contact_commitment',productCommitment:'product_commitment',projectCommitment:'project_commitment',followupCommitment:'followup_commitment'};
+  Object.entries(map).forEach(([id,column])=>{const el=document.getElementById(id);if(el)el.value=currentRoute[column]??'';});
+  updateWhy();
   updateHomeState();
-  updateWhy();
 }
 
-function loadVision(){
-  const data = getVision();
-  routeFields.forEach(id => { document.getElementById(id).value = data[id] || ''; });
-  document.getElementById('businessType').value = data.businessType || 'Ingreso complementario';
+async function saveVision(){
+  const payload={
+    user_id:currentUser.id,
+    why:document.getElementById('why').value.trim(),
+    goal_90:document.getElementById('goal90').value.trim(),
+    vision_5:document.getElementById('vision5').value.trim(),
+    business_type:document.getElementById('businessType').value,
+    power_hour:Number(document.getElementById('powerHour').value)||null,
+    contact_commitment:Number(document.getElementById('contactCommitment').value)||0,
+    product_commitment:Number(document.getElementById('productCommitment').value)||0,
+    project_commitment:Number(document.getElementById('projectCommitment').value)||0,
+    followup_commitment:Number(document.getElementById('followupCommitment').value)||0,
+    updated_at:new Date().toISOString()
+  };
+  const {error}=await db.from('routes').upsert(payload);
+  if(error){setMessage('savedMessage',error.message,true);return;}
+  currentRoute=payload;
+  setMessage('savedMessage','✓ Tu ruta quedó guardada y sincronizada.');
   updateWhy();
-}
-
-function updateWhy(){
-  const why = getVision().why;
-  document.getElementById('whyDisplay').textContent = why ? '“'+why+'”' : 'Tu visión vive acá.';
+  updateHomeState();
 }
 
 function routeComplete(data){
-  return routeFields.every(id => String(data[id] || '').trim() !== '');
+  return Boolean(data.why&&data.goal_90&&data.vision_5&&data.power_hour&&
+    data.contact_commitment!==null&&data.product_commitment!==null&&
+    data.project_commitment!==null&&data.followup_commitment!==null);
+}
+
+function updateWhy(){
+  document.getElementById('whyDisplay').textContent=currentRoute.why?'“'+currentRoute.why+'”':'Tu visión vive acá.';
 }
 
 function updateHomeState(){
-  const data = getVision();
-  const completed = routeFields.filter(id => String(data[id] || '').trim() !== '').length;
-  const ready = routeComplete(data);
-  document.getElementById('welcomeHome').hidden = ready;
-  document.getElementById('dailyHome').hidden = !ready;
-  document.getElementById('routeProgressText').textContent = completed+' de '+routeFields.length+' compromisos definidos';
-  document.getElementById('routeProgress').style.width = (completed/routeFields.length*100)+'%';
-  document.querySelector('#welcomeHome .btn').textContent = completed ? 'Continuar mi ruta' : 'Empezar mi ruta';
-  if(ready) renderDailyTasks(data);
+  const fields=['why','goal_90','vision_5','power_hour','contact_commitment','product_commitment','project_commitment','followup_commitment'];
+  const completed=fields.filter(key=>currentRoute[key]!==null&&currentRoute[key]!==undefined&&String(currentRoute[key]).trim()!=='').length;
+  const ready=routeComplete(currentRoute);
+  document.getElementById('welcomeHome').hidden=ready;
+  document.getElementById('dailyHome').hidden=!ready;
+  document.getElementById('routeProgressText').textContent=completed+' de '+fields.length+' compromisos definidos';
+  document.getElementById('routeProgress').style.width=(completed/fields.length*100)+'%';
+  document.querySelector('#welcomeHome .btn').textContent=completed?'Continuar mi ruta':'Empezar mi ruta';
+  if(ready) renderDailyTasks();
 }
 
-function dailyDefinitions(data){
+function dailyDefinitions(){
   return [
-    ['contactos','Contactar a '+data.contactCommitment+' personas'],
-    ['producto','Abrir '+data.productCommitment+' conversaciones sobre producto'],
-    ['proyecto','Abrir '+data.projectCommitment+' conversaciones de proyecto'],
-    ['seguimientos','Hacer '+data.followupCommitment+' seguimientos'],
-    ['powerhour','Cumplir mi bloque de '+data.powerHour+' minutos']
+    ['contactos','Contactar a '+currentRoute.contact_commitment+' personas'],
+    ['producto','Abrir '+currentRoute.product_commitment+' conversaciones sobre producto'],
+    ['proyecto','Abrir '+currentRoute.project_commitment+' conversaciones de proyecto'],
+    ['seguimientos','Hacer '+currentRoute.followup_commitment+' seguimientos'],
+    ['powerhour','Cumplir mi bloque de '+currentRoute.power_hour+' minutos']
   ];
 }
 
@@ -682,22 +805,21 @@ function localDateKey(){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function renderDailyTasks(data){
+async function renderDailyTasks(){
+  const defs=dailyDefinitions();
+  const {data:rows}=await db.from('daily_progress').select('task_id,completed').eq('user_id',currentUser.id).eq('progress_date',localDateKey());
+  const state=new Map((rows||[]).map(row=>[row.task_id,row.completed]));
   const container=document.getElementById('dailyTasks');
   container.innerHTML='';
-  dailyDefinitions(data).forEach(([id,label])=>{
-    const key='igt-daily-'+localDateKey()+'-'+id;
-    const row=document.createElement('label');
-    row.className='task';
-    row.style.margin='0';
-    const check=document.createElement('input');
-    check.type='checkbox';
-    check.checked=localStorage.getItem(key)==='true';
-    check.addEventListener('change',()=>{ localStorage.setItem(key,String(check.checked)); updateDailyProgress(); });
-    const text=document.createElement('span');
-    text.textContent=label;
-    row.append(check,text);
-    container.appendChild(row);
+  defs.forEach(([id,label])=>{
+    const row=document.createElement('label');row.className='task';row.style.margin='0';
+    const check=document.createElement('input');check.type='checkbox';check.checked=state.get(id)===true;
+    check.addEventListener('change',async()=>{
+      await db.from('daily_progress').upsert({user_id:currentUser.id,progress_date:localDateKey(),task_id:id,label,completed:check.checked,updated_at:new Date().toISOString()});
+      updateDailyProgress();
+    });
+    const text=document.createElement('span');text.textContent=label;
+    row.append(check,text);container.appendChild(row);
   });
   updateDailyProgress();
 }
@@ -706,36 +828,97 @@ function updateDailyProgress(){
   const checks=[...document.querySelectorAll('#dailyTasks input[type="checkbox"]')];
   const done=checks.filter(c=>c.checked).length;
   document.getElementById('dailyText').textContent=done+' de '+checks.length+' acciones completadas';
-  document.getElementById('dailyProgress').style.width=(checks.length ? done/checks.length*100 : 0)+'%';
+  document.getElementById('dailyProgress').style.width=(checks.length?done/checks.length*100:0)+'%';
+}
+
+async function loadAcademy(){
+  const [{data:trainings},{data:progress}]=await Promise.all([
+    db.from('trainings').select('id,position,title,description,resource_url').order('position'),
+    db.from('training_progress').select('training_id').eq('user_id',currentUser.id)
+  ]);
+  trainingRows=trainings||[];
+  trainingViewed=new Set((progress||[]).map(row=>row.training_id));
+  renderAcademy();
 }
 
 function renderAcademy(){
-  const list=document.getElementById('trainingList');
-  list.innerHTML='';
-  const seen=safeStored('igtTrainings', {}) || {};
-  trainings.forEach(([title,description],index)=>{
-    const card=document.createElement('div');
-    card.className='card training'+(seen[index]?' seen':'');
-    card.innerHTML='<div class="training-head"><div><h2>'+(index+1)+'. '+title+'</h2><p>'+description+'</p><span class="status">'+(seen[index]?'Vista':'Pendiente')+'</span></div><button type="button" class="btn '+(seen[index]?'secondary':'')+'">'+(seen[index]?'Marcar pendiente':'Marcar como vista')+'</button></div>';
-    card.querySelector('button').addEventListener('click',()=>{
-      const state=safeStored('igtTrainings', {}) || {};
-      state[index]=!state[index];
-      localStorage.setItem('igtTrainings',JSON.stringify(state));
-      renderAcademy();
+  const list=document.getElementById('trainingList');list.innerHTML='';
+  trainingRows.forEach(training=>{
+    const seen=trainingViewed.has(training.id);
+    const card=document.createElement('div');card.className='card training'+(seen?' seen':'');
+    const head=document.createElement('div');head.className='training-head';
+    const info=document.createElement('div');
+    const title=document.createElement('h2');title.textContent=training.position+'. '+training.title;
+    const description=document.createElement('p');description.textContent=training.description;
+    const status=document.createElement('span');status.className='status';status.textContent=seen?'Vista':'Pendiente';
+    info.append(title,description,status);
+    if(training.resource_url){
+      const link=document.createElement('a');link.className='btn secondary';link.href=training.resource_url;link.target='_blank';link.rel='noopener';link.textContent='Abrir capacitación';info.appendChild(link);
+    }
+    const button=document.createElement('button');button.type='button';button.className='btn '+(seen?'secondary':'');button.textContent=seen?'Marcar pendiente':'Marcar como vista';
+    button.addEventListener('click',async()=>{
+      if(seen) await db.from('training_progress').delete().eq('user_id',currentUser.id).eq('training_id',training.id);
+      else await db.from('training_progress').insert({user_id:currentUser.id,training_id:training.id});
+      await loadAcademy();
     });
-    list.appendChild(card);
+    head.append(info,button);card.appendChild(head);list.appendChild(card);
   });
-  const count=Object.values(seen).filter(Boolean).length;
-  document.getElementById('academyProgressText').textContent=count+' de '+trainings.length+' capacitaciones vistas';
-  document.getElementById('academyProgress').style.width=(count/trainings.length*100)+'%';
+  document.getElementById('academyProgressText').textContent=trainingViewed.size+' de '+trainingRows.length+' capacitaciones vistas';
+  document.getElementById('academyProgress').style.width=(trainingRows.length?trainingViewed.size/trainingRows.length*100:0)+'%';
 }
 
 function updateRoleUI(){
-  const leader=(localStorage.getItem('igtRole') || 'persona') === 'lider';
+  const leader=['lider','admin'].includes(currentProfile?.role);
   document.getElementById('teamNavButton').hidden=!leader;
-  if(!leader && document.getElementById('equipo').classList.contains('active')) showPage('inicio');
 }
 
+async function loadTeam(){
+  const {data:members}=await db.from('profiles').select('id,full_name,role,created_at').eq('sponsor_id',currentUser.id).order('created_at',{ascending:false});
+  const list=document.getElementById('teamList');list.innerHTML='';
+  if(!members?.length) list.innerHTML='<p class="small">Todavía no hay personas asociadas a tu equipo.</p>';
+  (members||[]).forEach(member=>{
+    const row=document.createElement('div');row.className='person';
+    const circle=document.createElement('div');circle.className='profile-circle';circle.textContent=(member.full_name||'?').slice(0,1).toUpperCase();
+    const info=document.createElement('div');info.className='person-info';
+    const strong=document.createElement('strong');strong.textContent=member.full_name||'Sin nombre';
+    const small=document.createElement('div');small.className='small';small.textContent='Ingresó '+new Date(member.created_at).toLocaleDateString('es-AR');
+    info.append(strong,small);
+    const status=document.createElement('span');status.className='status';status.textContent=roleLabel(member.role);
+    row.append(circle,info,status);list.appendChild(row);
+  });
+  const {data:code,error}=await db.rpc('ensure_invite_code');
+  document.getElementById('inviteCode').textContent=error?'No se pudo generar el código.':code;
+}
+
+async function saveProfile(){
+  const full_name=document.getElementById('profileName').value.trim();
+  const {error}=await db.from('profiles').update({full_name,updated_at:new Date().toISOString()}).eq('id',currentUser.id);
+  setMessage('profileMessage',error?error.message:'✓ Perfil actualizado.',Boolean(error));
+  if(!error){currentProfile.full_name=full_name;document.getElementById('accountName').textContent=full_name||currentUser.email;}
+}
+
+async function claimInvite(){
+  const code=document.getElementById('profileInvite').value.trim().toUpperCase();
+  if(!code){setMessage('profileMessage','Ingresá un código.',true);return;}
+  const {data,error}=await db.rpc('claim_invitation',{p_code:code});
+  setMessage('profileMessage',error?error.message:data?'✓ Ya sos parte del equipo.':'El código no es válido o ya tenés un equipo.',Boolean(error||!data));
+}
+
+async function copyInvite(){
+  const code=document.getElementById('inviteCode').textContent;
+  const link=location.origin+location.pathname+'?invite='+encodeURIComponent(code);
+  await navigator.clipboard.writeText(link);
+  document.getElementById('copyInviteButton').textContent='✓ Enlace copiado';
+  setTimeout(()=>document.getElementById('copyInviteButton').textContent='Copiar mi enlace',1800);
+}
+
+document.getElementById('loginMode').addEventListener('click',()=>setAuthMode('login'));
+document.getElementById('signupMode').addEventListener('click',()=>setAuthMode('signup'));
+document.getElementById('authForm').addEventListener('submit',submitAuth);
+document.getElementById('logoutButton').addEventListener('click',()=>db.auth.signOut());
+document.getElementById('saveProfileButton').addEventListener('click',saveProfile);
+document.getElementById('claimInviteButton').addEventListener('click',claimInvite);
+document.getElementById('copyInviteButton').addEventListener('click',copyInvite);
 document.querySelectorAll('nav button[data-page]').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page,button)));
 document.getElementById('menuToggle').addEventListener('click',()=>{
   const nav=document.getElementById('mainNav');
@@ -744,16 +927,14 @@ document.getElementById('menuToggle').addEventListener('click',()=>{
 });
 document.addEventListener('click',event=>{
   const nav=document.getElementById('mainNav');
-  if(nav.classList.contains('open') && !event.target.closest('.brand')){
-    nav.classList.remove('open');
-    document.getElementById('menuToggle').setAttribute('aria-expanded','false');
-  }
+  if(nav.classList.contains('open')&&!event.target.closest('.brand')){nav.classList.remove('open');document.getElementById('menuToggle').setAttribute('aria-expanded','false');}
 });
 
-loadVision();
-updateHomeState();
-updateRoleUI();
-renderAcademy();
+const inviteFromUrl=new URLSearchParams(location.search).get('invite');
+if(inviteFromUrl){document.getElementById('authInvite').value=inviteFromUrl.toUpperCase();localStorage.setItem('igtPendingInvite',inviteFromUrl.toUpperCase());}
+db.auth.onAuthStateChange((_event,session)=>setTimeout(()=>handleSession(session),0));
+db.auth.getSession().then(({data})=>handleSession(data.session));
+setAuthMode('login');
 </script>
 
 </body>
