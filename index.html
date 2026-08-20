@@ -72,6 +72,17 @@
       color:var(--marron);
     }
 
+    .menu-toggle{
+      display:none;
+      border:1px solid var(--borde);
+      background:var(--papel);
+      color:var(--marron-oscuro);
+      border-radius:12px;
+      padding:10px 13px;
+      font-size:20px;
+      cursor:pointer;
+    }
+
     nav{
       display:flex;
       gap:10px;
@@ -89,9 +100,30 @@
     }
 
     nav button:hover,
-    nav button.active{
-      background:var(--beige);
+    nav button.active{ background:var(--beige); }
+
+    .home-content[hidden],
+    .role-only[hidden]{ display:none !important; }
+
+    .training-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
     }
+
+    .training.seen{
+      border-color:var(--marron);
+      background:#fbf6ef;
+    }
+
+    .training.seen .status{
+      background:var(--marron);
+      color:white;
+    }
+
+    .training .btn{ flex-shrink:0; margin-top:0; }
+    .empty-state{ text-align:center; padding:38px 24px; }
 
     main{
       max-width:1050px;
@@ -308,36 +340,39 @@
     }
 
     @media(max-width:760px){
-      header{
-        position:static;
-      }
-
+      header{ padding:12px 16px; }
       .brand{
-        display:block;
+        display:grid;
+        grid-template-columns:1fr auto;
+        gap:12px;
       }
-
+      .logo{ font-size:26px; }
+      .menu-toggle{ display:block; align-self:center; }
       nav{
-        margin-top:15px;
-        overflow-x:auto;
-        flex-wrap:nowrap;
-        padding-bottom:3px;
+        display:none;
+        grid-column:1 / -1;
+        margin-top:4px;
+        padding:8px;
+        overflow:visible;
+        flex-direction:column;
+        background:var(--papel);
+        border:1px solid var(--borde);
+        border-radius:16px;
       }
-
+      nav.open{ display:flex; }
       nav button{
-        white-space:nowrap;
+        width:100%;
+        text-align:left;
+        padding:13px 14px;
       }
-
-      .grid{
-        grid-template-columns:1fr;
-      }
-
-      main{
-        padding-top:18px;
-      }
-
-      .hero{
-        padding-top:24px;
-      }
+      .grid{ grid-template-columns:1fr; }
+      main{ padding:18px 16px 80px; }
+      .hero{ padding-top:24px; }
+      .card{ padding:20px; border-radius:18px; }
+      .quote{ padding:26px 22px; }
+      .training-head{ display:block; }
+      .training .btn{ width:100%; margin-top:16px; }
+      .person{ align-items:flex-start; flex-wrap:wrap; }
     }
   </style>
 </head>
@@ -352,12 +387,13 @@
       <div class="tagline">Aprendé · Aplicá · Duplicá</div>
     </div>
 
-    <nav>
-      <button class="active" onclick="showPage('inicio',this)">Inicio</button>
-      <button onclick="showPage('ruta',this)">Mi Ruta</button>
-      <button onclick="showPage('academia',this)">Academia</ 
-        <button id="teamNavButton" onclick="showPage('equipo',this)" style="display:none;">Mi Equipo</button>
-      <button onclick="showPage('perfil',this)">Perfil</button>
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mainNav">☰</button>
+    <nav id="mainNav" aria-label="Navegación principal">
+      <button class="active" type="button" data-page="inicio">Inicio</button>
+      <button type="button" data-page="ruta">Mi Ruta</button>
+      <button type="button" data-page="academia">Academia</button>
+      <button id="teamNavButton" class="role-only" type="button" data-page="equipo" hidden>Mi Equipo</button>
+      <button type="button" data-page="perfil">Perfil</button>
     </nav>
   </div>
 </header>
@@ -367,83 +403,58 @@
 
   <!-- INICIO -->
   <section id="inicio" class="page active">
-
-    <div class="hero">
-      <div class="eyebrow">Tu camino empieza acá</div>
-      <h1>Construí claridad primero. Después construí el negocio.</h1>
-      <p>
-        Tu visión marca la dirección. Tus acciones diarias construyen el camino.
-      </p>
+    <div id="welcomeHome" class="home-content">
+      <div class="hero">
+        <div class="eyebrow">Bienvenida a IGT</div>
+        <h1>Este es el comienzo de tu camino.</h1>
+        <p>Antes de pensar en qué hacer, vamos a entender qué querés construir y por qué.</p>
+        <button class="btn" type="button" onclick="goTo('ruta')">Empezar mi ruta</button>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Tu recorrido</div>
+        <h2 id="routeProgressText">0 de 8 compromisos definidos</h2>
+        <div class="progress"><span id="routeProgress"></span></div>
+        <p class="small">Visión → Objetivo → Tiempo → Compromisos diarios</p>
+      </div>
+      <div class="quote"><p>No necesitás tener todo resuelto para empezar. Necesitás una dirección.</p></div>
     </div>
 
-    <div class="quote">
-      <p>¿Y si esta decisión fuera el comienzo de la vida que imaginaste?</p>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="eyebrow">Hoy</div>
-        <h2>Tu foco de hoy</h2>
-        <p class="small">Marcá las acciones que vos misma elegiste para tu plan.</p>
-
-        <div class="task">
-          <input type="checkbox" class="daily">
-          <span>Contacté a 10 personas</span>
-        </div>
-
-        <div class="task">
-          <input type="checkbox" class="daily">
-          <span>Hablé con 5 personas sobre producto</span>
-        </div>
-
-        <div class="task">
-          <input type="checkbox" class="daily">
-          <span>Abrí 3 conversaciones de proyecto</span>
-        </div>
-
-        <div class="task">
-          <input type="checkbox" class="daily">
-          <span>Hice mis seguimientos</span>
-        </div>
-
-        <div class="task">
-          <input type="checkbox" class="daily">
-          <span>Cumplí mi Power Hour</span>
-        </div>
-
-        <p id="dailyText" class="small" style="margin-top:15px;">0 de 5 acciones completadas</p>
-        <div class="progress"><span id="dailyProgress"></span></div>
+    <div id="dailyHome" class="home-content" hidden>
+      <div class="hero">
+        <div class="eyebrow">Tu foco de hoy</div>
+        <h1>La visión se construye con acciones simples.</h1>
+        <p>Este checklist nace de los compromisos que definiste en Mi Ruta.</p>
       </div>
-
-      <div class="card">
-        <div class="eyebrow">Volvé a tu porqué</div>
-        <h2 id="whyDisplay">Tu visión vive acá.</h2>
-        <p>
-          Cuando completes Mi Ruta, vamos a mostrarte tus propias palabras para recordarte qué querés construir.
-        </p>
-        <button class="btn secondary" onclick="goTo('ruta')">Ver / editar mi visión</button>
+      <div class="grid">
+        <div class="card">
+          <div class="eyebrow">Hoy</div>
+          <h2>Mis compromisos diarios</h2>
+          <div id="dailyTasks"></div>
+          <p id="dailyText" class="small" style="margin-top:15px;">0 acciones completadas</p>
+          <div class="progress"><span id="dailyProgress"></span></div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Volvé a tu porqué</div>
+          <h2 id="whyDisplay">Tu visión vive acá.</h2>
+          <p>Usá tus propias palabras para recordar qué querés construir.</p>
+          <button class="btn secondary" type="button" onclick="goTo('ruta')">Ver / editar mi visión</button>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="eyebrow">Constancia</div>
+          <h2>Un día a la vez</h2>
+          <p class="small">Tus avances diarios quedan guardados en este dispositivo.</p>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Próximo aprendizaje</div>
+          <h2>Academia IGT</h2>
+          <p>Convertí cada capacitación en una acción.</p>
+          <button class="btn" type="button" onclick="goTo('academia')">Ver Academia</button>
+        </div>
       </div>
     </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="eyebrow">Progreso</div>
-        <h2>Tu semana</h2>
-        <p>Lun ✓ · Mar ✓ · Mié 4/5 · Jue — · Vie —</p>
-        <div class="progress"><span style="width:55%"></span></div>
-        <p class="small">La constancia se construye un día a la vez.</p>
-      </div>
-
-      <div class="card">
-        <div class="eyebrow">Próximo aprendizaje</div>
-        <h2>Visión y propósito</h2>
-        <p>No acumules información. Convertí cada capacitación en una acción.</p>
-        <button class="btn" onclick="goTo('academia')">Ver Academia</button>
-      </div>
-    </div>
-
   </section>
-
 
   <!-- MI RUTA -->
   <section id="ruta" class="page">
@@ -485,6 +496,17 @@
       <label>¿Cuántos minutos reales podés dedicar por día?</label>
       <input id="powerHour" type="number" min="10" placeholder="Ejemplo: 60">
 
+      <h2 style="margin-top:28px;">Definí tus compromisos diarios</h2>
+      <p class="small">Elegí cantidades realistas. Inicio va a crear tu checklist a partir de estos valores.</p>
+      <label for="contactCommitment">Personas a contactar</label>
+      <input id="contactCommitment" type="number" min="0" placeholder="Ejemplo: 10">
+      <label for="productCommitment">Conversaciones sobre producto</label>
+      <input id="productCommitment" type="number" min="0" placeholder="Ejemplo: 5">
+      <label for="projectCommitment">Conversaciones de proyecto</label>
+      <input id="projectCommitment" type="number" min="0" placeholder="Ejemplo: 3">
+      <label for="followupCommitment">Seguimientos</label>
+      <input id="followupCommitment" type="number" min="0" placeholder="Ejemplo: 5">
+
       <div class="notice">
         <strong>Principio IGT:</strong><br>
         No existe un número perfecto para todos. Lo importante es que lo que elijas lo hagas con constancia.
@@ -507,34 +529,12 @@
       Empezá por estas cinco capacitaciones clave. Después podés explorar toda la biblioteca.
     </p>
 
-    <div class="card training">
-      <h2>1. Visión y propósito</h2>
-      <p>Conectá con lo que querés construir y por qué es importante para vos.</p>
-      <span class="status">Pendiente</span>
-    </div>
+    <div id="trainingList"></div>
 
-    <div class="card training">
-      <h2>2. Tecnologías esenciales</h2>
-      <p>Conocé las herramientas que vas a utilizar para desarrollar tu actividad.</p>
-      <span class="status">Pendiente</span>
-    </div>
-
-    <div class="card training">
-      <h2>3. Plan de compensación</h2>
-      <p>Entendé cómo funciona el negocio utilizando siempre la información oficial vigente.</p>
-      <span class="status">Pendiente</span>
-    </div>
-
-    <div class="card training">
-      <h2>4. Productos y experiencia</h2>
-      <p>Usar → conocer → compartir → recomendar → acompañar.</p>
-      <span class="status">Pendiente</span>
-    </div>
-
-    <div class="card training">
-      <h2>5. Sistema y duplicación</h2>
-      <p>Aprendé → aplicá → enseñá → duplicá.</p>
-      <span class="status">Pendiente</span>
+    <div class="card">
+      <div class="eyebrow">Tu avance</div>
+      <h2 id="academyProgressText">0 de 5 capacitaciones vistas</h2>
+      <div class="progress"><span id="academyProgress"></span></div>
     </div>
 
     <div class="quote">
@@ -553,35 +553,10 @@
       Personas primero. Datos después.
     </p>
 
-    <div class="card">
-      <h2>Personas para acompañar hoy</h2>
-
-      <div class="person">
-        <div class="profile-circle">A</div>
-        <div class="person-info">
-          <strong>Ana</strong>
-          <div class="small">3 días sin actividad</div>
-        </div>
-        <span class="status">Necesita acompañamiento</span>
-      </div>
-
-      <div class="person">
-        <div class="profile-circle">S</div>
-        <div class="person-info">
-          <strong>Sofía</strong>
-          <div class="small">Comenzó hoy</div>
-        </div>
-        <span class="status">Nueva</span>
-      </div>
-
-      <div class="person">
-        <div class="profile-circle">L</div>
-        <div class="person-info">
-          <strong>Laura</strong>
-          <div class="small">Comenzó a duplicar</div>
-        </div>
-        <span class="status">Lista para liderar</span>
-      </div>
+    <div class="card empty-state">
+      <div class="profile-circle" style="margin:0 auto 14px;">IGT</div>
+      <h2>Tu equipo aparecerá acá</h2>
+      <p>Cuando sumes personas, vas a poder ver su avance y acompañarlas desde este espacio.</p>
     </div>
 
     <div class="card" style="margin-top:18px;">
@@ -627,217 +602,158 @@
 
 
 <script>
+const routeFields = ['why','goal90','vision5','powerHour','contactCommitment','productCommitment','projectCommitment','followupCommitment'];
+const trainings = [
+  ['Visión y propósito','Conectá con lo que querés construir y por qué es importante para vos.'],
+  ['Tecnologías esenciales','Conocé las herramientas que vas a utilizar para desarrollar tu actividad.'],
+  ['Plan de compensación','Entendé cómo funciona el negocio utilizando siempre la información oficial vigente.'],
+  ['Productos y experiencia','Usar → conocer → compartir → recomendar → acompañar.'],
+  ['Sistema y duplicación','Aprendé → aplicá → enseñá → duplicá.']
+];
+
+function safeStored(key, fallback = null){
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch (_) { return fallback; }
+}
 
 function showPage(page, button){
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-
-  document.getElementById(page).classList.add('active');
-
-  if(button){
-    button.classList.add('active');
-  }
-
+  if(page === 'equipo' && (localStorage.getItem('igtRole') || 'persona') !== 'lider') page = 'inicio';
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === page));
+  document.querySelectorAll('nav button[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  if(button) button.classList.add('active');
+  document.getElementById('mainNav').classList.remove('open');
+  document.getElementById('menuToggle').setAttribute('aria-expanded','false');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function goTo(page){
-  const buttons = document.querySelectorAll('nav button');
-
-  buttons.forEach(button=>{
-    if(button.textContent.toLowerCase().includes(
-      page === 'ruta' ? 'ruta' :
-      page === 'academia' ? 'academia' :
-      page
-    )){
-      showPage(page,button);
-    }
-  });
-}
+function goTo(page){ showPage(page, document.querySelector('[data-page="'+page+'"]')); }
+function getVision(){ return safeStored('igtVision', {}) || {}; }
 
 function saveVision(){
-
-  const data = {
-    why: document.getElementById('why').value,
-    goal90: document.getElementById('goal90').value,
-    vision5: document.getElementById('vision5').value,
-    businessType: document.getElementById('businessType').value,
-    powerHour: document.getElementById('powerHour').value
-  };
-
-  localStorage.setItem('igtVision',JSON.stringify(data));
-
-  document.getElementById('savedMessage').textContent =
-    '✓ Tu visión quedó guardada en este dispositivo.';
-
-  updateWhy();
+  const data = {};
+  routeFields.forEach(id => data[id] = document.getElementById(id).value.trim());
+  data.businessType = document.getElementById('businessType').value;
+  localStorage.setItem('igtVision', JSON.stringify(data));
+  document.getElementById('savedMessage').textContent = '✓ Tu ruta quedó guardada en este dispositivo.';
   updateHomeState();
+  updateWhy();
 }
 
 function loadVision(){
-
-  const stored = localStorage.getItem('igtVision');
-
-  if(!stored) return;
-
-  const data = JSON.parse(stored);
-
-  document.getElementById('why').value = data.why || '';
-  document.getElementById('goal90').value = data.goal90 || '';
-  document.getElementById('vision5').value = data.vision5 || '';
-  document.getElementById('businessType').value =
-    data.businessType || 'Ingreso complementario';
-  document.getElementById('powerHour').value = data.powerHour || '';
-
+  const data = getVision();
+  routeFields.forEach(id => { document.getElementById(id).value = data[id] || ''; });
+  document.getElementById('businessType').value = data.businessType || 'Ingreso complementario';
   updateWhy();
 }
 
 function updateWhy(){
-
-  const stored = localStorage.getItem('igtVision');
-
-  if(!stored) return;
-
-  const data = JSON.parse(stored);
-
-  if(data.why){
-    document.getElementById('whyDisplay').textContent =
-      '“' + data.why + '”';
-  }
+  const why = getVision().why;
+  document.getElementById('whyDisplay').textContent = why ? '“'+why+'”' : 'Tu visión vive acá.';
 }
 
-const checks = document.querySelectorAll('.daily');
+function routeComplete(data){
+  return routeFields.every(id => String(data[id] || '').trim() !== '');
+}
 
-checks.forEach((check,index)=>{
+function updateHomeState(){
+  const data = getVision();
+  const completed = routeFields.filter(id => String(data[id] || '').trim() !== '').length;
+  const ready = routeComplete(data);
+  document.getElementById('welcomeHome').hidden = ready;
+  document.getElementById('dailyHome').hidden = !ready;
+  document.getElementById('routeProgressText').textContent = completed+' de '+routeFields.length+' compromisos definidos';
+  document.getElementById('routeProgress').style.width = (completed/routeFields.length*100)+'%';
+  document.querySelector('#welcomeHome .btn').textContent = completed ? 'Continuar mi ruta' : 'Empezar mi ruta';
+  if(ready) renderDailyTasks(data);
+}
 
-  const key = 'igt-task-' + new Date().toISOString().slice(0,10) + '-' + index;
+function dailyDefinitions(data){
+  return [
+    ['contactos','Contactar a '+data.contactCommitment+' personas'],
+    ['producto','Abrir '+data.productCommitment+' conversaciones sobre producto'],
+    ['proyecto','Abrir '+data.projectCommitment+' conversaciones de proyecto'],
+    ['seguimientos','Hacer '+data.followupCommitment+' seguimientos'],
+    ['powerhour','Cumplir mi bloque de '+data.powerHour+' minutos']
+  ];
+}
 
-  check.checked = localStorage.getItem(key) === 'true';
+function localDateKey(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 
-  check.addEventListener('change',()=>{
-
-    localStorage.setItem(key,check.checked);
-
-    updateDailyProgress();
+function renderDailyTasks(data){
+  const container=document.getElementById('dailyTasks');
+  container.innerHTML='';
+  dailyDefinitions(data).forEach(([id,label])=>{
+    const key='igt-daily-'+localDateKey()+'-'+id;
+    const row=document.createElement('label');
+    row.className='task';
+    row.style.margin='0';
+    const check=document.createElement('input');
+    check.type='checkbox';
+    check.checked=localStorage.getItem(key)==='true';
+    check.addEventListener('change',()=>{ localStorage.setItem(key,String(check.checked)); updateDailyProgress(); });
+    const text=document.createElement('span');
+    text.textContent=label;
+    row.append(check,text);
+    container.appendChild(row);
   });
-
-});
+  updateDailyProgress();
+}
 
 function updateDailyProgress(){
-
-  let completed = 0;
-
-  checks.forEach(check=>{
-    if(check.checked) completed++;
-  });
-
-  const percentage = (completed / checks.length) * 100;
-
-  document.getElementById('dailyText').textContent =
-    completed + ' de ' + checks.length + ' acciones completadas';
-
-  document.getElementById('dailyProgress').style.width =
-    percentage + '%';
+  const checks=[...document.querySelectorAll('#dailyTasks input[type="checkbox"]')];
+  const done=checks.filter(c=>c.checked).length;
+  document.getElementById('dailyText').textContent=done+' de '+checks.length+' acciones completadas';
+  document.getElementById('dailyProgress').style.width=(checks.length ? done/checks.length*100 : 0)+'%';
 }
-function updateHomeState(){
 
-  const inicio = document.getElementById('inicio');
-
-  const previousWelcome = document.getElementById('newUserWelcome');
-  if(previousWelcome){
-    previousWelcome.remove();
-  }
-
-  let data = {};
-
-  const stored = localStorage.getItem('igtVision');
-
-  if(stored){
-    try{
-      data = JSON.parse(stored);
-    }catch(e){}
-  }
-
-  const pasos = [
-    data.why,
-    data.goal90,
-    data.vision5,
-    data.powerHour
-  ];
-
-  const completados = pasos.filter(valor =>
-    valor && String(valor).trim() !== ''
-  ).length;
-
-  const rutaLista = completados === 4;
-
-  Array.from(inicio.children).forEach(elemento => {
-    elemento.style.display = rutaLista ? '' : 'none';
+function renderAcademy(){
+  const list=document.getElementById('trainingList');
+  list.innerHTML='';
+  const seen=safeStored('igtTrainings', {}) || {};
+  trainings.forEach(([title,description],index)=>{
+    const card=document.createElement('div');
+    card.className='card training'+(seen[index]?' seen':'');
+    card.innerHTML='<div class="training-head"><div><h2>'+(index+1)+'. '+title+'</h2><p>'+description+'</p><span class="status">'+(seen[index]?'Vista':'Pendiente')+'</span></div><button type="button" class="btn '+(seen[index]?'secondary':'')+'">'+(seen[index]?'Marcar pendiente':'Marcar como vista')+'</button></div>';
+    card.querySelector('button').addEventListener('click',()=>{
+      const state=safeStored('igtTrainings', {}) || {};
+      state[index]=!state[index];
+      localStorage.setItem('igtTrainings',JSON.stringify(state));
+      renderAcademy();
+    });
+    list.appendChild(card);
   });
-
-  if(!rutaLista){
-
-    const porcentaje = (completados / 4) * 100;
-
-    const welcome = document.createElement('div');
-    welcome.id = 'newUserWelcome';
-    welcome.style.display = 'block';
-
-    welcome.innerHTML = `
-      <div class="hero">
-        <div class="eyebrow">Bienvenida a IGT</div>
-
-        <h1>Este es el comienzo de tu camino.</h1>
-
-        <p>
-          Antes de pensar en qué hacer, vamos a entender
-          qué querés construir y por qué.
-        </p>
-
-        <button class="btn" onclick="goTo('ruta')">
-          ${completados > 0 ? 'Continuar mi ruta' : 'Empezar mi ruta'}
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="eyebrow">Tu recorrido</div>
-        <h2>${completados} de 4 pasos definidos</h2>
-
-        <div class="progress">
-          <span style="width:${porcentaje}%"></span>
-        </div>
-
-        <p class="small">
-          Visión → Objetivo → Power Hour → Plan de acción
-        </p>
-      </div>
-
-      <div class="quote">
-        <p>
-          No necesitás tener todo resuelto para empezar.
-          Necesitás una dirección.
-        </p>
-      </div>
-    `;
-
-    inicio.prepend(welcome);
-  }
+  const count=Object.values(seen).filter(Boolean).length;
+  document.getElementById('academyProgressText').textContent=count+' de '+trainings.length+' capacitaciones vistas';
+  document.getElementById('academyProgress').style.width=(count/trainings.length*100)+'%';
 }
- function updateRoleUI(){
 
-  const role = localStorage.getItem('igtRole') || 'persona';
-  const teamButton = document.getElementById('teamNavButton');
+function updateRoleUI(){
+  const leader=(localStorage.getItem('igtRole') || 'persona') === 'lider';
+  document.getElementById('teamNavButton').hidden=!leader;
+  if(!leader && document.getElementById('equipo').classList.contains('active')) showPage('inicio');
+}
 
-  if(role === 'lider'){
-    teamButton.style.display = '';
-  }else{
-    teamButton.style.display = 'none';
+document.querySelectorAll('nav button[data-page]').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page,button)));
+document.getElementById('menuToggle').addEventListener('click',()=>{
+  const nav=document.getElementById('mainNav');
+  const open=nav.classList.toggle('open');
+  document.getElementById('menuToggle').setAttribute('aria-expanded',String(open));
+});
+document.addEventListener('click',event=>{
+  const nav=document.getElementById('mainNav');
+  if(nav.classList.contains('open') && !event.target.closest('.brand')){
+    nav.classList.remove('open');
+    document.getElementById('menuToggle').setAttribute('aria-expanded','false');
   }
-} 
+});
+
 loadVision();
-updateDailyProgress();
 updateHomeState();
-  updateRoleUI();
+updateRoleUI();
+renderAcademy();
 </script>
 
 </body>
