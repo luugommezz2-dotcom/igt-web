@@ -403,7 +403,7 @@
     <div class="eyebrow">Inspiring Global Team</div>
     <div class="logo serif">IGT</div>
     <h1>Tu camino, siempre con vos.</h1>
-    <p class="small">Ingresá con tu correo. Te enviaremos un enlace seguro, sin contraseña.</p>
+    <p class="small">Ingresá con tu correo y contraseña.</p>
     <div class="auth-tabs">
       <button id="loginMode" class="btn" type="button">Ingresar</button>
       <button id="signupMode" class="btn secondary" type="button">Crear cuenta</button>
@@ -415,9 +415,11 @@
       </div>
       <label for="authEmail">Correo electrónico</label>
       <input id="authEmail" type="email" autocomplete="email" required placeholder="vos@ejemplo.com">
+      <label for="authPassword">Contraseña</label>
+      <input id="authPassword" type="password" autocomplete="current-password" required minlength="8" placeholder="Mínimo 8 caracteres">
       <label for="authInvite">Código de invitación <span class="small">(opcional)</span></label>
       <input id="authInvite" autocomplete="off" placeholder="IGT-XXXXXXXX">
-      <button id="authSubmit" class="btn" type="submit">Enviarme el enlace de ingreso</button>
+      <button id="authSubmit" class="btn" type="submit">Ingresar</button>
       <p id="authMessage" class="form-message small"></p>
     </form>
   </div>
@@ -627,6 +629,14 @@
         <button id="claimInviteButton" class="btn secondary" type="button">Usar invitación</button>
         <p id="profileMessage" class="small" style="margin-top:10px;"></p>
       </div>
+      <div class="card">
+        <h2>Mi contraseña</h2>
+        <p class="small">Definí una contraseña para ingresar desde cualquier dispositivo.</p>
+        <label for="newPassword">Nueva contraseña</label>
+        <input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres">
+        <button id="setPasswordButton" class="btn secondary" type="button">Guardar contraseña</button>
+        <p id="passwordMessage" class="small" style="margin-top:10px;"></p>
+      </div>
     </div>
     <div class="quote"><p>No estás empezando de nuevo. Estás empezando desde todo lo que aprendiste.</p></div>
   </section>
@@ -663,29 +673,43 @@ function setAuthMode(mode){
   document.getElementById('nameField').hidden=!signup;
   document.getElementById('loginMode').className='btn '+(signup?'secondary':'');
   document.getElementById('signupMode').className='btn '+(signup?'':'secondary');
-  document.getElementById('authSubmit').textContent=signup?'Crear mi cuenta':'Enviarme el enlace de ingreso';
+  document.getElementById('authSubmit').textContent=signup?'Crear mi cuenta':'Ingresar';
+  document.getElementById('authPassword').autocomplete=signup?'new-password':'current-password';
   setMessage('authMessage','');
 }
 
 async function submitAuth(event){
   event.preventDefault();
   const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
   const name=document.getElementById('authName').value.trim();
   const invite=document.getElementById('authInvite').value.trim().toUpperCase();
+  if(password.length<8){setMessage('authMessage','La contraseña debe tener al menos 8 caracteres.',true);return;}
   if(authMode==='signup'&&!name){setMessage('authMessage','Ingresá tu nombre.',true);return;}
   if(invite) localStorage.setItem('igtPendingInvite',invite);
   document.getElementById('authForm').classList.add('loading');
-  const {error}=await db.auth.signInWithOtp({
-    email,
-    options:{
-      emailRedirectTo:'https://luugommezz2-dotcom.github.io/igt-web/',
-      shouldCreateUser:authMode==='signup',
-      data:{full_name:name}
-    }
-  });
+  let result;
+  if(authMode==='signup'){
+    result=await db.auth.signUp({email,password,options:{data:{full_name:name}}});
+  }else{
+    result=await db.auth.signInWithPassword({email,password});
+  }
   document.getElementById('authForm').classList.remove('loading');
-  if(error){setMessage('authMessage',error.message,true);return;}
-  setMessage('authMessage','Revisá tu correo y abrí el enlace de acceso.');
+  if(result.error){setMessage('authMessage',translateAuthError(result.error.message),true);return;}
+  if(authMode==='signup'&&!result.data.session){
+    setMessage('authMessage','Cuenta creada. Revisá tu correo para confirmarla.');
+  }else{
+    setMessage('authMessage','Acceso correcto.');
+  }
+}
+
+function translateAuthError(message){
+  const text=String(message||'');
+  if(/Invalid login credentials/i.test(text)) return 'Correo o contraseña incorrectos.';
+  if(/User already registered/i.test(text)) return 'Ese correo ya tiene una cuenta. Elegí Ingresar.';
+  if(/Password should be/i.test(text)) return 'La contraseña debe tener al menos 8 caracteres.';
+  if(/Email not confirmed/i.test(text)) return 'El correo todavía no fue confirmado.';
+  return text;
 }
 
 async function handleSession(session){
@@ -904,6 +928,14 @@ async function claimInvite(){
   setMessage('profileMessage',error?error.message:data?'✓ Ya sos parte del equipo.':'El código no es válido o ya tenés un equipo.',Boolean(error||!data));
 }
 
+async function setPassword(){
+  const password=document.getElementById('newPassword').value;
+  if(password.length<8){setMessage('passwordMessage','Usá al menos 8 caracteres.',true);return;}
+  const {error}=await db.auth.updateUser({password});
+  setMessage('passwordMessage',error?translateAuthError(error.message):'✓ Contraseña guardada. Ya podés ingresar desde la PC.',Boolean(error));
+  if(!error) document.getElementById('newPassword').value='';
+}
+
 async function copyInvite(){
   const code=document.getElementById('inviteCode').textContent;
   const link=location.origin+location.pathname+'?invite='+encodeURIComponent(code);
@@ -919,6 +951,7 @@ document.getElementById('logoutButton').addEventListener('click',()=>db.auth.sig
 document.getElementById('saveProfileButton').addEventListener('click',saveProfile);
 document.getElementById('claimInviteButton').addEventListener('click',claimInvite);
 document.getElementById('copyInviteButton').addEventListener('click',copyInvite);
+document.getElementById('setPasswordButton').addEventListener('click',setPassword);
 document.querySelectorAll('nav button[data-page]').forEach(button=>button.addEventListener('click',()=>showPage(button.dataset.page,button)));
 document.getElementById('menuToggle').addEventListener('click',()=>{
   const nav=document.getElementById('mainNav');
